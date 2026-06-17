@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEREK. Framework Dashboard</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: #e2e8f0; min-height: 100vh; }
+
+/* LOADING */
+.loading-overlay { position: fixed; inset: 0; background: #0d1117; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; gap: 16px; }
+.loading-logo { font-size: 2.2rem; font-weight: 900; color: #c9a84c; letter-spacing: 0.12em; }
+.loading-sub { font-size: 0.82rem; color: #64748b; }
+.loading-bar-track { width: 220px; height: 4px; background: #1e293b; border-radius: 99px; overflow: hidden; }
+.loading-bar-fill { height: 100%; background: linear-gradient(90deg, #c9a84c, #f0d080); border-radius: 99px; animation: loadpulse 1.8s ease-in-out infinite; }
+@keyframes loadpulse { 0%{width:0%} 60%{width:80%} 100%{width:100%} }
+
+/* NAV */
+.nav { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: #0a0e16; border-bottom: 2px solid #c9a84c33; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 8px; }
+.nav-logo { font-size: 0.95rem; font-weight: 900; letter-spacing: 0.12em; color: #c9a84c; white-space: nowrap; }
+.nav-logo span { color: #fff; }
+.nav-tabs { display: flex; gap: 5px; flex-wrap: wrap; }
+.tab-btn { padding: 7px 13px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.72rem; font-weight: 700; transition: all 0.2s; letter-spacing: 0.04em; white-space: nowrap; }
+.tab-btn.active { background: #c9a84c; color: #0d1117; }
+.tab-btn:not(.active) { background: #1a2332; color: #64748b; }
+.tab-btn:not(.active):hover { background: #1e293b; color: #e2e8f0; }
+.nav-right { display: flex; align-items: center; gap: 8px; }
+.sync-btn { background: #1a2332; border: 1px solid #334155; color: #94a3b8; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.7rem; font-weight: 700; transition: all 0.2s; }
+.sync-btn:hover { border-color: #c9a84c; color: #c9a84c; }
+.sync-status { font-size: 0.65rem; color: #475569; white-space: nowrap; }
+
+/* PAGES */
+.page { display: none; padding: 18px 20px; max-width: 1440px; margin: 0 auto; }
+.page.active { display: block; }
+
+/* GRIDS */
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.index-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.grid3 { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
+@media(max-width:1000px){ .stat-grid,.index-grid { grid-template-columns: repeat(2,1fr); } .grid4 { grid-template-columns: repeat(2,1fr); } }
+@media(max-width:700px){ .stat-grid,.index-grid,.grid2,.grid3,.grid4 { grid-template-columns: 1fr; } }
+
+/* STAT CARDS */
+.stat-card { background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 16px; position: relative; overflow: hidden; }
+.stat-card .s-label { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; margin-bottom: 6px; }
+.stat-card .s-val { font-size: 2rem; font-weight: 900; color: #f1f5f9; line-height: 1.1; }
+.stat-card .s-sub { font-size: 0.68rem; color: #64748b; margin-top: 4px; }
+.stat-card .s-wow { font-size: 0.7rem; margin-top: 6px; font-weight: 700; }
+.stat-card .s-bar { height: 3px; border-radius: 99px; background: #0d1117; margin-top: 10px; overflow: hidden; }
+.stat-card .s-bar-fill { height: 100%; border-radius: 99px; transition: width 1.2s ease; }
+
+/* RAG dot */
+.rag { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; flex-shrink: 0; }
+.rag.green { background: #34d399; box-shadow: 0 0 6px #34d39966; }
+.rag.amber { background: #fbbf24; box-shadow: 0 0 6px #fbbf2466; }
+.rag.red { background: #f87171; box-shadow: 0 0 6px #f8717166; }
+
+/* INDEX CARDS */
+.index-card { background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 16px; position: relative; overflow: hidden; }
+.index-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.index-card.c-gold::before { background: #c9a84c; }
+.index-card.c-red::before { background: #f87171; }
+.index-card.c-green::before { background: #34d399; }
+.index-card.c-blue::before { background: #60a5fa; }
+.index-card.c-purple::before { background: #6366f1; }
+.index-card.c-teal::before { background: #2dd4bf; }
+.index-card.c-orange::before { background: #fb923c; }
+.index-card .i-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.index-card .i-label { font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; }
+.index-card .i-score { font-size: 1.9rem; font-weight: 900; line-height: 1.1; }
+.index-card .i-max { font-size: 0.8rem; color: #475569; font-weight: 400; }
+.index-card .i-summary { font-size: 0.68rem; color: #64748b; margin-top: 5px; line-height: 1.5; min-height: 30px; }
+.index-card .i-wow { font-size: 0.68rem; font-weight: 700; margin-top: 4px; }
+.index-card .i-bar-track { height: 4px; background: #0d1117; border-radius: 99px; overflow: hidden; margin-top: 8px; }
+.index-card .i-bar-fill { height: 100%; border-radius: 99px; transition: width 1.2s ease; }
+
+/* SPARKLINE */
+.sparkline-wrap { margin-top: 6px; height: 28px; }
+
+/* PANELS */
+.panel { background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 18px; }
+.panel-title { font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.09em; color: #c9a84c; margin-bottom: 14px; }
+.mb16 { margin-bottom: 16px; }
+
+/* SURVEY BARS */
+.survey-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.survey-q { font-size: 0.7rem; color: #94a3b8; flex: 1; line-height: 1.4; }
+.survey-bar-track { width: 90px; height: 7px; background: #0d1117; border-radius: 99px; overflow: hidden; flex-shrink: 0; }
+.survey-bar-fill { height: 100%; border-radius: 99px; transition: width 1s ease; }
+.survey-score { font-size: 0.75rem; font-weight: 700; width: 30px; text-align: right; flex-shrink: 0; }
+
+/* PIE / DONUT CHARTS */
+.donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.donut-legend { display: flex; flex-direction: column; gap: 5px; width: 100%; }
+.legend-item { display: flex; align-items: center; gap: 7px; font-size: 0.68rem; color: #94a3b8; }
+.legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.legend-val { margin-left: auto; font-weight: 700; color: #e2e8f0; }
+
+/* MOOD GRID */
+.mood-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; }
+.mood-item { background: #0d1117; border-radius: 8px; padding: 10px 4px; text-align: center; }
+.mood-item .m-label { font-size: 0.6rem; color: #64748b; margin-bottom: 5px; }
+.mood-item .m-count { font-size: 1.3rem; font-weight: 900; }
+.mood-item .m-pct { font-size: 0.6rem; color: #475569; margin-top: 2px; }
+
+/* FLAGS */
+.flag-item { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid #0d1117; }
+.flag-item:last-child { border-bottom: none; }
+.flag-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.flag-dot.red { background: #f87171; }
+.flag-dot.amber { background: #fbbf24; }
+.flag-dot.green { background: #34d399; }
+.flag-text { font-size: 0.72rem; color: #94a3b8; line-height: 1.5; }
+.flag-text strong { color: #e2e8f0; }
+
+/* BADGES */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 0.6rem; font-weight: 700; }
+.badge.done { background: #064e3b; color: #34d399; }
+.badge.upcoming { background: #1e3a5f; color: #60a5fa; }
+.badge.flagged { background: #4c1d1d; color: #f87171; }
+.badge.pending { background: #2d2a1a; color: #fbbf24; }
+.badge.missed { background: #3b1e1e; color: #f87171; }
+.badge.ok { background: #064e3b; color: #34d399; }
+
+/* TABLE */
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; }
+.data-table th { text-align: left; color: #475569; font-weight: 700; padding: 0 10px 10px 0; border-bottom: 1px solid #1e293b; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.data-table td { padding: 8px 10px 8px 0; border-bottom: 1px solid #0d1117; color: #cbd5e1; vertical-align: middle; }
+.data-table tr:last-child td { border-bottom: none; }
+.table-wrap { overflow-x: auto; }
+
+/* HOURS */
+.hours-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+.hours-label { font-size: 0.7rem; color: #94a3b8; width: 120px; flex-shrink: 0; }
+.hours-track { flex: 1; height: 9px; background: #0d1117; border-radius: 99px; overflow: hidden; }
+.hours-fill { height: 100%; border-radius: 99px; transition: width 1s ease; }
+.hours-val { font-size: 0.7rem; color: #94a3b8; width: 45px; text-align: right; flex-shrink: 0; }
+
+/* BLOCKER */
+.blocker-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+.blocker-label { font-size: 0.7rem; color: #94a3b8; flex: 1; }
+.blocker-bar-track { width: 100px; height: 8px; background: #0d1117; border-radius: 99px; overflow: hidden; flex-shrink: 0; }
+.blocker-bar-fill { height: 100%; background: #6366f1; border-radius: 99px; }
+.blocker-count { font-size: 0.7rem; color: #64748b; width: 20px; text-align: right; }
+
+/* DEREK BANNER */
+.derek-banner { background: linear-gradient(135deg,#111827,#0d1117); border: 1px solid #c9a84c33; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.derek-banner .d-label { font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.09em; color: #475569; margin-bottom: 4px; }
+.derek-banner .d-score { font-size: 2.8rem; font-weight: 900; color: #c9a84c; line-height: 1; }
+.derek-banner .d-desc { font-size: 0.72rem; color: #64748b; max-width: 460px; line-height: 1.6; }
+.derek-stats { display: flex; gap: 24px; }
+.derek-stats .ds { text-align: center; }
+.derek-stats .ds-val { font-size: 1.5rem; font-weight: 900; }
+.derek-stats .ds-label { font-size: 0.62rem; color: #475569; margin-top: 2px; }
+
+/* LEADERSHIP */
+.ldr-header { background: linear-gradient(135deg,#111827,#0a0e16); border: 1px solid #c9a84c44; border-radius: 14px; padding: 24px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.ldr-header h2 { font-size: 1.05rem; font-weight: 900; color: #c9a84c; letter-spacing: 0.06em; }
+.ldr-header p { font-size: 0.72rem; color: #475569; margin-top: 4px; }
+.ldr-score .big { font-size: 3.8rem; font-weight: 900; line-height: 1; }
+.ldr-score .small { font-size: 0.68rem; color: #475569; margin-top: 3px; text-align: right; }
+
+.recommendation { background: #0d1117; border-left: 3px solid #c9a84c; border-radius: 0 8px 8px 0; padding: 12px 14px; margin-bottom: 10px; }
+.recommendation .r-title { font-size: 0.76rem; font-weight: 700; margin-bottom: 4px; }
+.recommendation .r-text { font-size: 0.71rem; color: #64748b; line-height: 1.6; }
+.recommendation.warn { border-left-color: #f87171; }
+.recommendation.warn .r-title { color: #f87171; }
+.recommendation.good { border-left-color: #34d399; }
+.recommendation.good .r-title { color: #34d399; }
+.recommendation.neutral { border-left-color: #c9a84c; }
+.recommendation.neutral .r-title { color: #c9a84c; }
+
+/* PRINT BUTTON */
+.print-btn { background: #1a2332; border: 1px solid #c9a84c55; color: #c9a84c; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.72rem; font-weight: 700; transition: all 0.2s; }
+.print-btn:hover { background: #c9a84c; color: #0d1117; }
+@media print {
+  .nav,.nav-tabs,.sync-btn,.print-btn,.tab-btn { display: none !important; }
+  .page { display: block !important; }
+  #page-overview,#page-survey,#page-sessions,#page-hours { display: none !important; }
+  #page-leadership { display: block !important; padding: 0; }
+  body { background: white; color: black; }
+  .ldr-header,.panel,.index-card { background: white; border-color: #ddd; }
+  .ldr-header h2,.panel-title,.i-label { color: #8b7d3a; }
+}
+
+/* WEEK SELECTOR */
+.week-selector { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.week-selector label { font-size: 0.7rem; color: #475569; }
+.week-selector select { background: #111827; border: 1px solid #1e293b; color: #e2e8f0; padding: 6px 10px; border-radius: 8px; font-size: 0.72rem; outline: none; cursor: pointer; }
+.week-selector select:focus { border-color: #c9a84c; }
+
+.no-data { font-size: 0.7rem; color: #475569; font-style: italic; padding: 8px 0; }
+.empty-state { text-align: center; padding: 30px 16px; color: #475569; font-size: 0.75rem; line-height: 1.8; }
+.empty-state strong { color: #64748b; display: block; margin-bottom: 6px; font-size: 0.82rem; }
+
+/* WoW badge */
+.wow-up { color: #34d399; }
+.wow-down { color: #f87171; }
+.wow-same { color: #64748b; }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-logo">NOT TODAY DEREK.</div>
+  <div class="loading-sub">Loading your dashboard...</div>
+  <div class="loading-bar-track"><div class="loading-bar-fill"></div></div>
+</div>
+
+<div class="nav">
+  <div class="nav-logo">NOT TODAY <span>DEREK.</span></div>
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="showPage('overview',this)">Overview</button>
+    <button class="tab-btn" onclick="showPage('survey',this)">Survey Data</button>
+    <button class="tab-btn" onclick="showPage('sessions',this)">Sessions</button>
+    <button class="tab-btn" onclick="showPage('hours',this)">Hours</button>
+    <button class="tab-btn" onclick="showPage('leadership',this)">Leadership Report</button>
+  </div>
+  <div class="nav-right">
+    <button class="sync-btn" onclick="loadAllData()">↻ Sync</button>
+    <span class="sync-status" id="syncStatus">Not synced</span>
+  </div>
+</div>
+
+<!-- ═══════════════ OVERVIEW ═══════════════ -->
+<div class="page active" id="page-overview">
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="s-label">Total Survey Responses</div>
+      <div class="s-val" id="ov-responses">—</div>
+      <div class="s-sub" id="ov-responses-sub">Awaiting sync</div>
+      <div class="s-wow" id="ov-responses-wow"></div>
+      <div class="s-bar"><div class="s-bar-fill" id="ov-responses-bar" style="width:0%;background:#c9a84c;"></div></div>
+    </div>
+    <div class="stat-card">
+      <div class="s-label">Composite Score — This Week</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="rag" id="ov-rag-composite"></span>
+        <div class="s-val" id="ov-composite">—</div>
+      </div>
+      <div class="s-sub">/ 10 overall average</div>
+      <div class="s-wow" id="ov-composite-wow"></div>
+      <div class="s-bar"><div class="s-bar-fill" id="ov-composite-bar" style="width:0%;background:#34d399;"></div></div>
+    </div>
+    <div class="stat-card">
+      <div class="s-label">Sessions Logged</div>
+      <div class="s-val" id="ov-sessions">—</div>
+      <div class="s-sub" id="ov-sessions-sub">In Staff Sessions tab</div>
+      <div class="s-wow" id="ov-sessions-wow"></div>
+      <div class="s-bar"><div class="s-bar-fill" id="ov-sessions-bar" style="width:0%;background:#6366f1;"></div></div>
+    </div>
+    <div class="stat-card">
+      <div class="s-label">Staff Flagged This Week</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="rag" id="ov-rag-flags"></span>
+        <div class="s-val" id="ov-flags" style="color:#f87171;">—</div>
+      </div>
+      <div class="s-sub">Scoring below 5 on any metric</div>
+      <div class="s-wow" id="ov-flags-wow"></div>
+      <div class="s-bar"><div class="s-bar-fill" id="ov-flags-bar" style="width:0%;background:#f87171;"></div></div>
+    </div>
+  </div>
+
+  <!-- 7 INDEX SCORES -->
+  <div class="index-grid" id="ov-index-grid">
+    <div class="index-card c-gold">
+      <div class="i-header"><div class="i-label">Wellbeing Index</div><span class="rag" id="rag-wellbeing"></span></div>
+      <div class="i-score" style="color:#c9a84c;" id="idx-wellbeing">—<span class="i-max">/10</span></div>
+      <div class="i-summary" id="sum-wellbeing"></div>
+      <div class="i-wow" id="wow-wellbeing"></div>
+      <div class="i-bar-track"><div class="i-bar-fill" id="bar-wellbeing" style="width:0%;background:#c9a84c;"></div></div>
+      <div class="sparkline-wrap"><svg id="spark-wellbeing" width="100%" height="28"></svg></div>
+    </div>
+    <div class="index-card c-red">
+      <div class="i-header"><div class="i-label">DEREK. Behaviour Index</div><span class="rag" id="rag-derek"></span></div>
+      <div class="i-score" style="color:#f87171;" id="idx-derek">—<span class="i-max">/10</span></div>
+      <div class="i-summary" id="sum-derek"></div>
+      <div class="i-wow" id="wow-derek"></div>
+      <div class="i-bar-track"><div class="i-bar-fill" id="bar-derek" style="width:0%;background:#f87171;"></div></div>
+      <div class="sparkline-wrap"><svg id="spark-derek" width="100%" height="28"></svg></div>
+    </div>
+    <div class="index-card c-green">
+      <div class="i-header"><div class="i-label">Culture & Team Health</div><span class="rag" id="rag-culture"></span></div>
+      <div class="i-score" style="color:#34d399;" id="idx-culture">—<span class="i-max">/10</span></div>
+      <div class="i-summary" id="sum-culture"></div>
+      <div class="i-wow" id="wow-culture"></div>
+      <div class="i-bar-track"><div class="i-bar-fill" id="bar-culture" style="width:0%;background:#34d399;"></div></div>
+      <div class="sparkline-wrap"><svg id="spark-culture" width="100%" height="28"></svg></div>
+    </div>
+    <div class="index-card c-blue">
+      <div class="i-header"><div class="i-label">Leadership Trust</div><span class="rag" id="rag-leadership"></span></div>
+      <div class="i-score" style="color:#60a5fa;" id="idx-leadership">—<span class="i-max">/10</span></div>
+      <div class="i-summary" id="sum-leadership"></div>
+      <div class="i-wow" id="wow-leadership"></div>
+      <div class="i-bar-track"><div class="i-bar-fill" id="bar-leadership" style="width:0%;background:#60a5fa;"></div></div>
+      <div class="sparkline-wrap"><svg id="spark-leadership" width="100%" height="28"></svg></div>
+    </div>
+    <div class="index-card c-purple">
+      <div class="i-header"><div class="i-label">Productivity Index</div><span class="rag" id="rag-productivity"></span></div>
+      <div class="i-score" style="color:#6366f1;" id="idx-productivity">—<span class="i-max">/10</span></div>
+      <div class="i-summary" id="sum-productivity"></div>
+      <div class="i-wow" id="wow-productivity"></div>
+      <div class="i-bar-track"><div class="i-bar-fill" id="bar-productivity" style="width:0%;background:#6366f1;"></div></div>
+      <div class="sparkline-wrap"><svg id="spark-productivity" width="100%" height="28"></svg></div>
+    </div>
+    <div class="index-card c-teal">
+      <div class="i-header"><div class="i-label">Sales Readiness</div><span class="rag" id="rag-sales"></span></div>
+      <div class="i-score" style="color:#2dd4bf;" id="idx-sales">—<span class="i-max">/10</span></div>
+      <div class="i-summary" id="sum-sales"></div>
+      <div class="i-wow" id="wow-sales"></div>
+      <div class="i-bar-track"><div class="i-bar-fill" id="bar-sales" style="width:0%;background:#2dd4bf;"></div></div>
+      <div class="sparkline-wrap"><svg id="spark-sales" width="100%" height="28"></svg></div>
+    </div>
+    <div class="index-card c-orange">
+      <div class="i-header"><div class="i-label">Composite Score</div><span class="rag" id="rag-composite"></span></div>
+      <div class="i-score" style="color:#fb923c;" id="idx-composite">—<span class="i-max">/10</span></div>
+      <div class="i-summary" id="sum-composite"></div>
+      <div class="i-wow" id="wow-composite"></div>
+      <div class="i-bar-track"><div class="i-bar-fill" id="bar-composite" style="width:0%;background:#fb923c;"></div></div>
+      <div class="sparkline-wrap"><svg id="spark-composite" width="100%" height="28"></svg></div>
+    </div>
+  </div>
+
+  <!-- DEREK BANNER -->
+  <div class="derek-banner">
+    <div>
+      <div class="d-label">DEREK. Self-Awareness Rate — All Responses</div>
+      <div class="d-score" id="derek-pct">—%</div>
+    </div>
+    <div class="d-desc">Percentage of staff who identified DEREK behaviour in themselves. A declining number over time is your strongest evidence the program is working.</div>
+    <div class="derek-stats">
+      <div class="ds"><div class="ds-val" id="derek-yes" style="color:#f87171;">—</div><div class="ds-label">Said Yes</div></div>
+      <div class="ds"><div class="ds-val" id="derek-no" style="color:#34d399;">—</div><div class="ds-label">Said No</div></div>
+    </div>
+  </div>
+
+  <!-- DONUTS ROW -->
+  <div class="grid4">
+    <div class="panel">
+      <div class="panel-title">DEREK. Self-Awareness</div>
+      <div class="donut-wrap">
+        <svg viewBox="0 0 120 120" width="120" height="120" id="donut-derek-awareness"><circle cx="60" cy="60" r="50" fill="none" stroke="#0d1117" stroke-width="18"/><circle id="donut-derek-yes" cx="60" cy="60" r="50" fill="none" stroke="#f87171" stroke-width="18" stroke-dasharray="0 314" stroke-dashoffset="78" transform="rotate(-90 60 60)" style="transition:stroke-dasharray 1.2s ease;"/><circle id="donut-derek-no" cx="60" cy="60" r="50" fill="none" stroke="#34d399" stroke-width="18" stroke-dasharray="0 314" stroke-dashoffset="78" transform="rotate(-90 60 60)" style="transition:stroke-dasharray 1.2s ease;"/><text x="60" y="56" text-anchor="middle" fill="#f1f5f9" font-size="18" font-weight="900" id="donut-derek-label">—</text><text x="60" y="70" text-anchor="middle" fill="#475569" font-size="8">identified</text></svg>
+        <div class="donut-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#f87171;"></div>Noticed DEREK<div class="legend-val" id="dl-yes">—</div></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#34d399;"></div>DEREK-free week<div class="legend-val" id="dl-no">—</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Team Culture Mood</div>
+      <div class="donut-wrap">
+        <svg viewBox="0 0 120 120" width="120" height="120" id="donut-mood"><circle cx="60" cy="60" r="50" fill="none" stroke="#0d1117" stroke-width="18"/><g id="donut-mood-arcs"></g><text x="60" y="60" text-anchor="middle" dominant-baseline="middle" fill="#94a3b8" font-size="8" id="donut-mood-label">This week</text></svg>
+        <div class="donut-legend" id="mood-legend"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Session Status</div>
+      <div class="donut-wrap">
+        <svg viewBox="0 0 120 120" width="120" height="120"><circle cx="60" cy="60" r="50" fill="none" stroke="#0d1117" stroke-width="18"/><g id="donut-sessions-arcs"></g><text x="60" y="55" text-anchor="middle" fill="#f1f5f9" font-size="16" font-weight="900" id="donut-sessions-label">—</text><text x="60" y="69" text-anchor="middle" fill="#475569" font-size="8">sessions</text></svg>
+        <div class="donut-legend" id="sessions-legend"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Performance Blockers</div>
+      <div class="donut-wrap">
+        <svg viewBox="0 0 120 120" width="120" height="120"><circle cx="60" cy="60" r="50" fill="none" stroke="#0d1117" stroke-width="18"/><g id="donut-blockers-arcs"></g><text x="60" y="60" text-anchor="middle" dominant-baseline="middle" fill="#94a3b8" font-size="8">Top blockers</text></svg>
+        <div class="donut-legend" id="blockers-legend"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLAGS -->
+  <div class="panel mb16">
+    <div class="panel-title">Attention Required — This Week</div>
+    <div id="flags-container"><div class="empty-state"><strong>No flags yet</strong>Flags appear automatically when staff score below 5 on any metric.</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ SURVEY DATA ═══════════════ -->
+<div class="page" id="page-survey">
+  <div class="week-selector">
+    <label>Viewing:</label>
+    <select id="week-select" onchange="renderSurveyPage()">
+      <option value="all">All responses to date</option>
+    </select>
+    <span id="week-count" style="font-size:0.7rem;color:#475569;"></span>
+  </div>
+  <div class="grid2">
+    <div class="panel mb16"><div class="panel-title">Wellbeing & Energy</div><div id="sv-wellbeing"></div></div>
+    <div class="panel mb16"><div class="panel-title">Accountability & Standards</div><div id="sv-derek"></div></div>
+  </div>
+  <div class="grid2">
+    <div class="panel mb16"><div class="panel-title">Team Culture & Communication</div><div id="sv-culture"></div></div>
+    <div class="panel mb16"><div class="panel-title">Leadership Trust</div><div id="sv-leadership"></div></div>
+  </div>
+  <div class="grid2">
+    <div class="panel mb16"><div class="panel-title">Performance & Productivity</div><div id="sv-productivity"></div></div>
+    <div class="panel mb16"><div class="panel-title">Sales & Brand — Luxury Automotive</div><div id="sv-sales"></div></div>
+  </div>
+  <div class="grid2">
+    <div class="panel mb16">
+      <div class="panel-title">Performance Blockers</div>
+      <div style="display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap;">
+        <svg viewBox="0 0 120 120" width="110" height="110" style="flex-shrink:0;"><circle cx="60" cy="60" r="50" fill="none" stroke="#0d1117" stroke-width="18"/><g id="sv-blockers-arcs"></g></svg>
+        <div style="flex:1;min-width:120px;" id="sv-blockers-legend"></div>
+      </div>
+    </div>
+    <div class="panel mb16"><div class="panel-title">Open Responses This Period</div><div id="sv-open"></div></div>
+  </div>
+  <div class="panel mb16">
+    <div class="panel-title">Individual Staff Scores</div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>Wellbeing</th><th>DEREK.</th><th>Culture</th><th>Leadership</th><th>Productivity</th><th>Sales</th><th>Composite</th><th>Status</th></tr></thead>
+        <tbody id="individual-tbody"><tr><td colspan="9" class="no-data" style="padding:16px 0;">No survey data yet.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ SESSIONS ═══════════════ -->
+<div class="page" id="page-sessions">
+  <div class="panel mb16">
+    <div class="panel-title">Staff Sessions Log</div>
+    <p style="font-size:0.7rem;color:#475569;margin-bottom:14px;">Add sessions to your <strong style="color:#94a3b8;">Staff Sessions</strong> sheet tab, then click Sync.</p>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Staff Name</th><th>Session #</th><th>Date</th><th>Type</th><th>Status</th><th>Key Themes</th><th>Follow Up</th><th>Flag</th></tr></thead>
+        <tbody id="sessions-tbody"><tr><td colspan="8" class="no-data" style="padding:16px 0;">No sessions logged yet.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="panel">
+      <div class="panel-title">Session Delivery Status</div>
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+        <svg viewBox="0 0 120 120" width="110" height="110" style="flex-shrink:0;"><circle cx="60" cy="60" r="50" fill="none" stroke="#0d1117" stroke-width="18"/><g id="donut-sess-status"></g><text x="60" y="55" text-anchor="middle" fill="#f1f5f9" font-size="16" font-weight="900" id="sess-donut-label">—</text><text x="60" y="69" text-anchor="middle" fill="#475569" font-size="8">logged</text></svg>
+        <div style="flex:1;" id="sess-status-legend"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Follow-Ups Required</div>
+      <div id="followup-list"><div class="no-data">No follow-ups flagged</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ HOURS ═══════════════ -->
+<div class="page" id="page-hours">
+  <div class="panel mb16">
+    <div class="panel-title">Weekly Hours Log</div>
+    <p style="font-size:0.7rem;color:#475569;margin-bottom:14px;">Update your <strong style="color:#94a3b8;">Hours Log</strong> sheet tab, then click Sync.</p>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Week Starting</th><th>1-on-1</th><th>Workshop</th><th>Data & Reporting</th><th>Supervision</th><th>Ad Hoc</th><th>Total</th><th>Remaining</th></tr></thead>
+        <tbody id="hours-tbody"><tr><td colspan="8" class="no-data" style="padding:16px 0;">No hours logged yet.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="panel">
+      <div class="panel-title">Hours Breakdown — Most Recent Week</div>
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+        <svg viewBox="0 0 120 120" width="110" height="110" style="flex-shrink:0;"><circle cx="60" cy="60" r="50" fill="none" stroke="#0d1117" stroke-width="18"/><g id="donut-hours-arcs"></g><text x="60" y="55" text-anchor="middle" fill="#f1f5f9" font-size="14" font-weight="900" id="donut-hours-label">—</text><text x="60" y="69" text-anchor="middle" fill="#475569" font-size="8">hrs this week</text></svg>
+        <div style="flex:1;" id="hours-breakdown"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Monthly Summary</div>
+      <div id="hours-monthly"><div class="no-data">No data yet</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ LEADERSHIP REPORT ═══════════════ -->
+<div class="page" id="page-leadership">
+  <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+    <button class="print-btn" onclick="window.print()">⬇ Print / Save as PDF</button>
+  </div>
+  <div class="ldr-header">
+    <div>
+      <h2>THE DEREK. FRAMEWORK — Monthly Report</h2>
+      <p>Prepared by Wade Hobba &nbsp;|&nbsp; <span id="ldr-period">—</span> &nbsp;|&nbsp; Confidential</p>
+      <p style="margin-top:6px;font-size:0.7rem;color:#64748b;">Luxury Automotive Sales Team &nbsp;|&nbsp; Culture, Leadership & Wellbeing Program</p>
+    </div>
+    <div class="ldr-score">
+      <div class="big" id="ldr-big-score" style="color:#c9a84c;">—</div>
+      <div class="small">Composite Score / 10</div>
+      <div class="small" id="ldr-score-label" style="margin-top:5px;font-weight:700;">Awaiting data</div>
+    </div>
+  </div>
+
+  <div class="index-grid" style="margin-bottom:16px;">
+    <div class="index-card c-gold"><div class="i-label">Wellbeing Index</div><div class="i-score" style="color:#c9a84c;" id="ldr-wellbeing">—<span class="i-max">/10</span></div><div class="i-summary" id="ldr-sum-wellbeing"></div></div>
+    <div class="index-card c-red"><div class="i-label">DEREK. Behaviour Index</div><div class="i-score" style="color:#f87171;" id="ldr-derek">—<span class="i-max">/10</span></div><div class="i-summary" id="ldr-sum-derek"></div></div>
+    <div class="index-card c-green"><div class="i-label">Culture & Team Health</div><div class="i-score" style="color:#34d399;" id="ldr-culture">—<span class="i-max">/10</span></div><div class="i-summary" id="ldr-sum-culture"></div></div>
+    <div class="index-card c-blue"><div class="i-label">Leadership Trust</div><div class="i-score" style="color:#60a5fa;" id="ldr-leadership">—<span class="i-max">/10</span></div><div class="i-summary" id="ldr-sum-leadership"></div></div>
+    <div class="index-card c-purple"><div class="i-label">Productivity Index</div><div class="i-score" style="color:#6366f1;" id="ldr-productivity">—<span class="i-max">/10</span></div><div class="i-summary" id="ldr-sum-productivity"></div></div>
+    <div class="index-card c-teal"><div class="i-label">Sales Readiness</div><div class="i-score" style="color:#2dd4bf;" id="ldr-sales">—<span class="i-max">/10</span></div><div class="i-summary" id="ldr-sum-sales"></div></div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel mb16">
+      <div class="panel-title">DEREK. Self-Awareness Rate</div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <svg viewBox="0 0 120 120" width="100" height="100" style="flex-shrink:0;"><circle cx="60" cy="60" r="50" fill="none" stroke="#0d1117" stroke-width="18"/><circle id="ldr-donut-yes" cx="60" cy="60" r="50" fill="none" stroke="#f87171" stroke-width="18" stroke-dasharray="0 314" stroke-dashoffset="78" transform="rotate(-90 60 60)" style="transition:stroke-dasharray 1s ease;"/><text x="60" y="56" text-anchor="middle" fill="#f1f5f9" font-size="16" font-weight="900" id="ldr-derek-pct">—</text><text x="60" y="70" text-anchor="middle" fill="#475569" font-size="8">of staff</text></svg>
+        <div style="font-size:0.72rem;color:#64748b;line-height:1.7;flex:1;">self-identified DEREK behaviour this period. A declining number over time is direct evidence the program is shifting behaviour on the floor.</div>
+      </div>
+    </div>
+    <div class="panel mb16">
+      <div class="panel-title">Team Culture Mood</div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <svg viewBox="0 0 120 120" width="100" height="100" style="flex-shrink:0;"><circle cx="60" cy="60" r="50" fill="none" stroke="#0d1117" stroke-width="18"/><g id="ldr-mood-arcs"></g></svg>
+        <div id="ldr-mood-legend" style="flex:1;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel mb16">
+    <div class="panel-title">Observations & Recommendations for Leadership</div>
+    <div id="ldr-recommendations"><div class="empty-state"><strong>Recommendations generate automatically</strong>Once survey data is collected, this section highlights what's working, what needs attention, and what actions are recommended.</div></div>
+  </div>
+
+  <div class="panel mb16">
+    <div class="panel-title">Top Performance Blockers This Period</div>
+    <div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap;">
+      <svg viewBox="0 0 120 120" width="110" height="110" style="flex-shrink:0;"><circle cx="60" cy="60" r="50" fill="none" stroke="#0d1117" stroke-width="18"/><g id="ldr-blockers-arcs"></g></svg>
+      <div id="ldr-blockers-legend" style="flex:1;min-width:180px;padding-top:8px;"></div>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:16px 0;font-size:0.67rem;color:#475569;border-top:1px solid #1e293b;">
+    The DEREK. Framework &nbsp;|&nbsp; Wade Hobba &nbsp;|&nbsp; thederekprogram@gmail.com &nbsp;|&nbsp; 0422 266 838
+    <span style="color:#c9a84c;font-style:italic;margin-top:4px;display:block;">Not Today, Derek.</span>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwRHXSPM_8qzgVIXXJytcMUZt8Y-Z_J6K4faKeKvxkAjSl_H3m6Ii3Y7CSkC_M4s5jVpg/exec';
+
+let allData = { responses:[], sessions:[], hours:[], workshops:[] };
+
+async function fetchSheet(name) {
+  try {
+    const r = await fetch(`${APPS_SCRIPT_URL}?sheet=${encodeURIComponent(name)}`);
+    if (!r.ok) return [];
+    const data = await r.json();
+    return data;
+  } catch(e) { console.error('Fetch error:', e); return []; }
+}
+
+function avg(arr) {
+  const n = arr.filter(v => v !== null && v !== '' && !isNaN(v)).map(Number);
+  return n.length ? n.reduce((a,b)=>a+b,0)/n.length : null;
+}
+function fmt(n) { return (n===null||isNaN(n)) ? '—' : parseFloat(n).toFixed(1); }
+function pct(n) { return n===null ? 0 : Math.min(Math.max((n/10)*100,0),100); }
+
+function ragClass(n) {
+  if (n===null) return '';
+  return n>=7 ? 'green' : n>=5 ? 'amber' : 'red';
+}
+function ragEl(id, n) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'rag ' + ragClass(n);
+}
+
+function summaryText(key, val) {
+  if (val===null) return 'No data yet.';
+  const summaries = {
+    wellbeing: val>=8?'Team energy and recovery are strong. Staff are showing up resourced.':val>=6?'Wellbeing is moderate. Worth monitoring energy and stress levels closely.':'Staff energy and recovery are below benchmark. Consider workload review.',
+    derek: val>=8?'Staff are holding themselves to high standards and taking full ownership.':val>=6?'Accountability is developing. DEREK behaviours are reducing but still present.':'Ownership and standards need reinforcement. Focus 1-on-1s on accountability.',
+    culture: val>=8?'Team communication and belonging are strong. Culture is healthy.':val>=6?'Culture is building. Psychological safety has room to grow.':'Communication and belonging are below benchmark. Priority area.',
+    leadership: val>=8?'Staff feel supported, heard and guided. Leadership trust is high.':val>=6?'Leadership trust is moderate. Feedback frequency and recognition could improve.':'Leadership trust is low. This is the highest-leverage area for leadership to address.',
+    productivity: val>=8?'Staff feel equipped, focused and performing near their potential.':val>=6?'Productivity is solid but clarity and support gaps exist.':'Productivity is below potential. Clarity on expectations is likely a key blocker.',
+    sales: val>=8?'Brand pride, pipeline discipline and customer confidence are all high.':val>=6?'Sales readiness is developing. Product knowledge or pipeline follow-up may need attention.':'Sales readiness needs focus. Staff confidence and brand alignment are below standard.',
+    composite: val>=8?'Overall program health is strong across all dimensions.':val>=6?'The program is producing positive movement. Key areas are still developing.':'The program is in early stages. Focus on the lowest-scoring index first.'
+  };
+  return summaries[key] || '';
+}
+
+function wowText(thisVal, lastVal) {
+  if (thisVal===null||lastVal===null) return '';
+  const diff = (thisVal-lastVal).toFixed(1);
+  if (Math.abs(diff)<0.1) return `<span class="wow-same">→ No change vs last week</span>`;
+  return diff>0
+    ? `<span class="wow-up">↑ +${diff} vs last week</span>`
+    : `<span class="wow-down">↓ ${diff} vs last week</span>`;
+}
+
+function processResponses(rows) {
+  if (!rows||rows.length<2) return [];
+  const out = [];
+  for (let i=1;i<rows.length;i++) {
+    const r = rows[i];
+    const name = r[1] ? String(r[1]).trim() : '';
+    if (!name) continue;
+    out.push({
+      timestamp:String(r[0]||''), name,
+      energy:+r[2], sleep:+r[3], stress:+r[4], bestSelf:+r[5],
+      outsideWork:String(r[6]||''),
+      highStandard:+r[7], didWhatSaid:+r[8], ownership:+r[9], beyondMin:+r[10],
+      derekSelf:String(r[11]||''),
+      teamComms:+r[12], psychSafe:+r[13], valued:+r[14],
+      witnessedBad:String(r[15]||''), mood:String(r[16]||''),
+      managerSupport:+r[17], feedback:+r[18], trustLeadership:+r[19], recognised:+r[20],
+      productive:+r[21], clarityTools:+r[22], blocker:String(r[23]||''), customerConfidence:+r[24],
+      productKnowledge:+r[25], pipeline:+r[26], brandPride:+r[27], presentation:+r[28],
+      openResponse:String(r[29]||'')
+    });
+  }
+  return out;
+}
+
+function calcIndices(rs) {
+  if (!rs||!rs.length) return null;
+  const w = avg(rs.flatMap(r=>[r.energy,r.sleep,r.stress,r.bestSelf]));
+  const d = avg(rs.flatMap(r=>[r.highStandard,r.didWhatSaid,r.ownership,r.beyondMin]));
+  const c = avg(rs.flatMap(r=>[r.teamComms,r.psychSafe,r.valued]));
+  const l = avg(rs.flatMap(r=>[r.managerSupport,r.feedback,r.trustLeadership,r.recognised]));
+  const p = avg(rs.flatMap(r=>[r.productive,r.clarityTools,r.customerConfidence]));
+  const s = avg(rs.flatMap(r=>[r.productKnowledge,r.pipeline,r.brandPride,r.presentation]));
+  const vals = [w,d,c,l,p,s].filter(v=>v!==null);
+  const comp = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+  return {wellbeing:w,derek:d,culture:c,leadership:l,productivity:p,sales:s,composite:comp};
+}
+
+function getWeekGroups(rs) {
+  const map = {};
+  rs.forEach(r=>{
+    if (!r.timestamp) return;
+    const d = new Date(r.timestamp);
+    const mon = new Date(d); mon.setDate(d.getDate()-((d.getDay()+6)%7));
+    const key = mon.toISOString().split('T')[0];
+    if (!map[key]) map[key]=[];
+    map[key].push(r);
+  });
+  return map;
+}
+
+// ── DONUT CHART ──
+function buildDonut(svgId, segments) {
+  // segments: [{value, color, label}]
+  const el = document.getElementById(svgId);
+  if (!el) return;
+  el.innerHTML = '';
+  const total = segments.reduce((s,seg)=>s+seg.value,0);
+  if (!total) return;
+  const r=50, cx=60, cy=60, circ=2*Math.PI*r;
+  let offset = -Math.PI/2;
+  segments.forEach(seg=>{
+    if (!seg.value) return;
+    const frac = seg.value/total;
+    const arc = frac*circ;
+    const x1=cx+r*Math.cos(offset), y1=cy+r*Math.sin(offset);
+    const end=offset+frac*2*Math.PI;
+    const x2=cx+r*Math.cos(end), y2=cy+r*Math.sin(end);
+    const large=frac>0.5?1:0;
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`);
+    path.setAttribute('fill', seg.color);
+    path.setAttribute('opacity','0.9');
+    el.appendChild(path);
+    offset=end;
+  });
+  // inner circle to make donut
+  const inner = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  inner.setAttribute('cx',cx); inner.setAttribute('cy',cy); inner.setAttribute('r',34);
+  inner.setAttribute('fill','#111827');
+  el.appendChild(inner);
+}
+
+function buildLegend(containerId, segments, total) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = segments.filter(s=>s.value>0).map(s=>`
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${s.color};"></div>
+      ${s.label}
+      <div class="legend-val">${s.value}${total?' ('+Math.round((s.value/total)*100)+'%)':''}</div>
+    </div>`).join('');
+}
+
+// ── SPARKLINE ──
+function drawSparkline(svgId, values, color) {
+  const svg = document.getElementById(svgId);
+  if (!svg||!values||values.length<2) return;
+  const W=svg.getBoundingClientRect().width||100, H=26;
+  const valid = values.filter(v=>v!==null);
+  if (!valid.length) return;
+  const mn=Math.min(...valid), mx=Math.max(...valid);
+  const range=mx-mn||1;
+  const pts = values.map((v,i)=>{
+    const x=(i/(values.length-1))*W;
+    const y=H-((v-mn)/range)*(H-4)-2;
+    return `${x},${y}`;
+  });
+  svg.innerHTML=`<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`;
+}
+
+// ── SURVEY BAR SECTION ──
+function renderSurveySection(containerId, items, rs) {
+  const el=document.getElementById(containerId);
+  if (!el) return;
+  if (!rs.length) { el.innerHTML='<div class="no-data">No responses yet</div>'; return; }
+  el.innerHTML=items.map(item=>{
+    const val=avg(rs.map(r=>r[item.key]).filter(v=>!isNaN(v)&&v!==0));
+    const col=val>=7?'#34d399':val>=5?'#fbbf24':'#f87171';
+    return `<div class="survey-row">
+      <div class="survey-q">${item.label}</div>
+      <div class="survey-bar-track"><div class="survey-bar-fill" style="width:${pct(val)}%;background:${col};"></div></div>
+      <div class="survey-score" style="color:${col};">${fmt(val)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── RENDER OVERVIEW ──
+function renderOverview() {
+  const rs = allData.responses;
+  const weeks = getWeekGroups(rs);
+  const wKeys = Object.keys(weeks).sort();
+  const thisWK = wKeys.length ? weeks[wKeys[wKeys.length-1]] : [];
+  const lastWK = wKeys.length>1 ? weeks[wKeys[wKeys.length-2]] : [];
+  const thisIdx = calcIndices(thisWK);
+  const lastIdx = calcIndices(lastWK);
+  const allIdx = calcIndices(rs);
+
+  // STAT CARDS
+  document.getElementById('ov-responses').textContent = rs.length||0;
+  document.getElementById('ov-responses-sub').textContent = rs.length ? `Across ${wKeys.length} week(s)` : 'No responses yet';
+  document.getElementById('ov-responses-bar').style.width = Math.min((rs.length/80)*100,100)+'%';
+  document.getElementById('ov-responses-wow').innerHTML = wowText(thisWK.length, lastWK.length)||'';
+
+  const comp = thisIdx?thisIdx.composite:null;
+  const lastComp = lastIdx?lastIdx.composite:null;
+  document.getElementById('ov-composite').textContent = fmt(comp);
+  document.getElementById('ov-composite-bar').style.width = pct(comp)+'%';
+  document.getElementById('ov-composite-bar').style.background = comp>=7?'#34d399':comp>=5?'#fbbf24':'#f87171';
+  document.getElementById('ov-composite-wow').innerHTML = wowText(comp,lastComp);
+  ragEl('ov-rag-composite', comp);
+
+  const sesDataRows = allData.sessions.slice(1).filter(r=>r[0]&&r[0].trim());
+  document.getElementById('ov-sessions').textContent = sesDataRows.length||0;
+  document.getElementById('ov-sessions-bar').style.width = Math.min((sesDataRows.length/8)*100,100)+'%';
+
+  // FLAGS
+  const flags=[];
+  thisWK.forEach(r=>{
+    const low=[];
+    [{key:'energy',l:'Energy'},{key:'psychSafe',l:'Psych Safety'},{key:'productive',l:'Productivity'},{key:'trustLeadership',l:'Leadership Trust'},{key:'valued',l:'Belonging'}]
+      .forEach(f=>{ if(!isNaN(r[f.key])&&r[f.key]>0&&r[f.key]<5) low.push(f.l); });
+    if(low.length) flags.push({name:r.name, issues:low});
+  });
+  const lastFlags = lastWK.length ? lastWK.filter(r=>[r.energy,r.psychSafe,r.productive,r.trustLeadership,r.valued].some(v=>!isNaN(v)&&v>0&&v<5)).length : null;
+  document.getElementById('ov-flags').textContent = flags.length||0;
+  document.getElementById('ov-flags-bar').style.width = Math.min((flags.length/20)*100,100)+'%';
+  document.getElementById('ov-flags-wow').innerHTML = wowText(flags.length, lastFlags);
+  ragEl('ov-rag-flags', flags.length===0?10:flags.length<=2?5:2);
+
+  const flagsEl=document.getElementById('flags-container');
+  if(flags.length) {
+    flagsEl.innerHTML=flags.map(f=>`<div class="flag-item"><div class="flag-dot red"></div><div class="flag-text"><strong>${f.name}</strong> — Low scores in: ${f.issues.join(', ')}. Prioritise in next 1-on-1.</div></div>`).join('');
+  } else if(rs.length) {
+    flagsEl.innerHTML='<div class="flag-item"><div class="flag-dot green"></div><div class="flag-text"><strong>No flags this week</strong> — No staff scored below 5 on any metric.</div></div>';
+  } else {
+    flagsEl.innerHTML='<div class="empty-state"><strong>No data yet</strong>Flags appear once staff complete the survey.</div>';
+  }
+
+  // INDEX CARDS
+  const idxDefs=[
+    {key:'wellbeing',id:'wellbeing',col:'#c9a84c'},
+    {key:'derek',id:'derek',col:'#f87171'},
+    {key:'culture',id:'culture',col:'#34d399'},
+    {key:'leadership',id:'leadership',col:'#60a5fa'},
+    {key:'productivity',id:'productivity',col:'#6366f1'},
+    {key:'sales',id:'sales',col:'#2dd4bf'},
+    {key:'composite',id:'composite',col:'#fb923c'}
+  ];
+  idxDefs.forEach(({key,id,col})=>{
+    const cur = thisIdx?thisIdx[key]:null;
+    const last = lastIdx?lastIdx[key]:null;
+    const el=document.getElementById('idx-'+id);
+    if(el) el.innerHTML=`${fmt(cur)}<span class="i-max">/10</span>`;
+    const bar=document.getElementById('bar-'+id);
+    if(bar) { bar.style.width=pct(cur)+'%'; bar.style.background=col; }
+    ragEl('rag-'+id, cur);
+    const sumEl=document.getElementById('sum-'+id);
+    if(sumEl) sumEl.textContent=summaryText(key,cur);
+    const wowEl=document.getElementById('wow-'+id);
+    if(wowEl) wowEl.innerHTML=wowText(cur,last);
+  });
+
+  // SPARKLINES — weekly composite per index
+  const weeklyData={wellbeing:[],derek:[],culture:[],leadership:[],productivity:[],sales:[],composite:[]};
+  wKeys.forEach(k=>{
+    const idx=calcIndices(weeks[k]);
+    Object.keys(weeklyData).forEach(key=>weeklyData[key].push(idx?idx[key]:null));
+  });
+  idxDefs.forEach(({key,id,col})=>drawSparkline('spark-'+id, weeklyData[key], col));
+
+  // DEREK SELF-AWARENESS
+  const derekYes=rs.filter(r=>r.derekSelf&&r.derekSelf.toLowerCase().includes('yes')).length;
+  const derekNo=rs.filter(r=>r.derekSelf&&r.derekSelf.toLowerCase().includes('no')).length;
+  const derekTot=derekYes+derekNo;
+  const derekPct=derekTot?Math.round((derekYes/derekTot)*100):null;
+  document.getElementById('derek-pct').textContent=derekPct!==null?derekPct+'%':'—%';
+  document.getElementById('derek-yes').textContent=derekYes||'—';
+  document.getElementById('derek-no').textContent=derekNo||'—';
+  document.getElementById('dl-yes').textContent=derekYes||'—';
+  document.getElementById('dl-no').textContent=derekNo||'—';
+  document.getElementById('donut-derek-label').textContent=derekPct!==null?derekPct+'%':'—';
+
+  // Derek donut
+  if(derekTot) {
+    const circumference=2*Math.PI*50;
+    const yesDash=(derekYes/derekTot)*circumference;
+    const noDash=(derekNo/derekTot)*circumference;
+    const yesEl=document.getElementById('donut-derek-yes');
+    const noEl=document.getElementById('donut-derek-no');
+    if(yesEl) { yesEl.setAttribute('stroke-dasharray',`${yesDash} ${circumference-yesDash}`); yesEl.setAttribute('stroke-dashoffset',-(circumference*0)); }
+    if(noEl) { noEl.setAttribute('stroke-dasharray',`${noDash} ${circumference-noDash}`); noEl.setAttribute('stroke-dashoffset',-(yesDash)); }
+  }
+
+  // MOOD DONUT
+  const moodDefs=[
+    {label:'Energised',key:'energised',color:'#34d399'},
+    {label:'Focused',key:'focused',color:'#60a5fa'},
+    {label:'Flat',key:'flat',color:'#94a3b8'},
+    {label:'Tense',key:'tense',color:'#f87171'},
+    {label:'Disconnected',key:'disconnected',color:'#fbbf24'}
+  ];
+  const moodCounts=moodDefs.map(m=>({...m,value:thisWK.filter(r=>r.mood&&r.mood.toLowerCase().trim()===m.label.toLowerCase()).length}));
+  buildDonut('donut-mood-arcs', moodCounts);
+  buildLegend('mood-legend', moodCounts, thisWK.length);
+  document.getElementById('donut-mood-label').textContent=thisWK.length?'This week':'No data';
+
+  // SESSION STATUS DONUT (overview)
+  const statuses=[
+    {label:'Completed',color:'#34d399',value:sesDataRows.filter(r=>r[4]&&r[4].toLowerCase().includes('complet')).length},
+    {label:'Upcoming',color:'#60a5fa',value:sesDataRows.filter(r=>r[4]&&r[4].toLowerCase().includes('upcoming')).length},
+    {label:'Missed',color:'#f87171',value:sesDataRows.filter(r=>r[4]&&r[4].toLowerCase().includes('miss')).length},
+    {label:'Pending',color:'#fbbf24',value:sesDataRows.filter(r=>r[4]&&r[4].toLowerCase().includes('pend')).length}
+  ];
+  buildDonut('donut-sessions-arcs', statuses);
+  buildLegend('sessions-legend', statuses, sesDataRows.length);
+  const dlbl=document.getElementById('donut-sessions-label');
+  if(dlbl) dlbl.textContent=sesDataRows.length||'—';
+
+  // BLOCKERS DONUT (overview)
+  const blockerCols=['#6366f1','#f87171','#fbbf24','#34d399','#60a5fa','#2dd4bf','#fb923c'];
+  const blockerMap={};
+  rs.forEach(r=>{if(r.blocker)blockerMap[r.blocker]=(blockerMap[r.blocker]||0)+1;});
+  const blockerSegs=Object.entries(blockerMap).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([label,value],i)=>({label,value,color:blockerCols[i]}));
+  buildDonut('donut-blockers-arcs', blockerSegs);
+  buildLegend('blockers-legend', blockerSegs, rs.length);
+}
+
+// ── RENDER SURVEY PAGE ──
+function renderSurveyPage() {
+  const sel=document.getElementById('week-select');
+  const weeks=getWeekGroups(allData.responses);
+  const wKeys=Object.keys(weeks).sort();
+
+  if(sel&&sel.options.length===1) {
+    wKeys.forEach(k=>{
+      const opt=document.createElement('option');
+      opt.value=k;
+      const d=new Date(k+'T12:00:00');
+      opt.textContent='Week of '+d.toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});
+      sel.appendChild(opt);
+    });
+  }
+  const selected=sel?sel.value:'all';
+  const rs=selected==='all'?allData.responses:(weeks[selected]||[]);
+  const cnt=document.getElementById('week-count');
+  if(cnt) cnt.textContent=rs.length+' response(s)';
+
+  renderSurveySection('sv-wellbeing',[
+    {key:'energy',label:'Energy coming to work'},
+    {key:'sleep',label:'Sleep & recovery'},
+    {key:'stress',label:'Stress levels (10=in control)'},
+    {key:'bestSelf',label:'Showed up as best self'}
+  ],rs);
+  renderSurveySection('sv-derek',[
+    {key:'highStandard',label:'Held high personal standard'},
+    {key:'didWhatSaid',label:'Did what I said I would do'},
+    {key:'ownership',label:'Took ownership of results'},
+    {key:'beyondMin',label:'Challenged beyond minimum'}
+  ],rs);
+  renderSurveySection('sv-culture',[
+    {key:'teamComms',label:'Team communicates openly'},
+    {key:'psychSafe',label:'Psychological safety with manager'},
+    {key:'valued',label:'Feels valued & respected'}
+  ],rs);
+  renderSurveySection('sv-leadership',[
+    {key:'managerSupport',label:'Manager supports growth'},
+    {key:'feedback',label:'Receives clear useful feedback'},
+    {key:'trustLeadership',label:'Trusts leadership direction'},
+    {key:'recognised',label:'Feels recognised for performance'}
+  ],rs);
+  renderSurveySection('sv-productivity',[
+    {key:'productive',label:'Productivity relative to potential'},
+    {key:'clarityTools',label:'Had clarity, tools & support'},
+    {key:'customerConfidence',label:'Customer interaction confidence'}
+  ],rs);
+  renderSurveySection('sv-sales',[
+    {key:'productKnowledge',label:'Product knowledge confidence'},
+    {key:'pipeline',label:'Proactive pipeline follow-up'},
+    {key:'brandPride',label:'Motivated & proud to represent brand'},
+    {key:'presentation',label:'Personal presentation matched brand standard'}
+  ],rs);
+
+  // Blockers pie
+  const blockerMap={};
+  rs.forEach(r=>{if(r.blocker)blockerMap[r.blocker]=(blockerMap[r.blocker]||0)+1;});
+  const blockerCols=['#6366f1','#f87171','#fbbf24','#34d399','#60a5fa','#2dd4bf'];
+  const bSegs=Object.entries(blockerMap).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([label,value],i)=>({label,value,color:blockerCols[i]}));
+  buildDonut('sv-blockers-arcs', bSegs);
+  buildLegend('sv-blockers-legend', bSegs, rs.length);
+
+  // Open responses
+  const openEl=document.getElementById('sv-open');
+  const opens=rs.filter(r=>r.openResponse&&r.openResponse.trim());
+  openEl.innerHTML=opens.length?opens.map(r=>`<div class="flag-item"><div class="flag-dot green"></div><div class="flag-text"><strong>${r.name}</strong><br>${r.openResponse}</div></div>`).join(''):'<div class="no-data">No open responses this period</div>';
+
+  // Individual table
+  const tbody=document.getElementById('individual-tbody');
+  if(!rs.length){tbody.innerHTML='<tr><td colspan="9" class="no-data" style="padding:16px 0;">No survey data yet.</td></tr>';return;}
+  const byName={};
+  rs.forEach(r=>{byName[r.name]=r;});
+  tbody.innerHTML=Object.values(byName).map(r=>{
+    const w=avg([r.energy,r.sleep,r.stress,r.bestSelf]);
+    const d=avg([r.highStandard,r.didWhatSaid,r.ownership,r.beyondMin]);
+    const c=avg([r.teamComms,r.psychSafe,r.valued]);
+    const l=avg([r.managerSupport,r.feedback,r.trustLeadership,r.recognised]);
+    const p=avg([r.productive,r.clarityTools,r.customerConfidence]);
+    const s=avg([r.productKnowledge,r.pipeline,r.brandPride,r.presentation]);
+    const all=[w,d,c,l,p,s].filter(v=>v!==null);
+    const comp=all.length?all.reduce((a,b)=>a+b,0)/all.length:null;
+    const flag=[w,d,c,l,p,s].some(v=>v!==null&&v<5);
+    const cell=v=>{const col=v>=7?'#34d399':v>=5?'#fbbf24':'#f87171';return`<td style="color:${col};font-weight:700;">${fmt(v)}</td>`;};
+    return`<tr><td style="font-weight:600;">${r.name}</td>${cell(w)}${cell(d)}${cell(c)}${cell(l)}${cell(p)}${cell(s)}${cell(comp)}<td>${flag?'<span class="badge flagged">Flag</span>':'<span class="badge ok">OK</span>'}</td></tr>`;
+  }).join('');
+}
+
+// ── RENDER SESSIONS ──
+function renderSessions() {
+  const rows=allData.sessions;
+  const tbody=document.getElementById('sessions-tbody');
+  const dataRows=rows.slice(1).filter(r=>r[0]&&r[0].trim());
+  if(!dataRows.length){tbody.innerHTML='<tr><td colspan="8" class="no-data" style="padding:16px 0;">No sessions logged yet.</td></tr>';return;}
+  tbody.innerHTML=dataRows.map(r=>{
+    const s=r[4]||'';
+    const bc=s.toLowerCase().includes('complet')?'done':s.toLowerCase().includes('upcoming')?'upcoming':s.toLowerCase().includes('miss')?'missed':'pending';
+    return`<tr><td style="font-weight:600;">${r[0]||''}</td><td>${r[1]||''}</td><td>${r[2]||''}</td><td>${r[3]||''}</td><td><span class="badge ${bc}">${s||'—'}</span></td><td style="max-width:180px;font-size:0.68rem;color:#94a3b8;">${r[5]||'—'}</td><td>${r[6]&&r[6].toLowerCase().includes('yes')?'<span class="badge pending">Yes</span>':'—'}</td><td>${r[7]&&r[7].toLowerCase().includes('yes')?'<span class="badge flagged">Yes</span>':'—'}</td></tr>`;
+  }).join('');
+
+  // Session status donut (sessions page)
+  const statuses=[
+    {label:'Completed',color:'#34d399',value:dataRows.filter(r=>r[4]&&r[4].toLowerCase().includes('complet')).length},
+    {label:'Upcoming',color:'#60a5fa',value:dataRows.filter(r=>r[4]&&r[4].toLowerCase().includes('upcoming')).length},
+    {label:'Missed',color:'#f87171',value:dataRows.filter(r=>r[4]&&r[4].toLowerCase().includes('miss')).length},
+    {label:'Pending',color:'#fbbf24',value:dataRows.filter(r=>r[4]&&r[4].toLowerCase().includes('pend')).length}
+  ];
+  buildDonut('donut-sess-status', statuses);
+  buildLegend('sess-status-legend', statuses, dataRows.length);
+  const slbl=document.getElementById('sess-donut-label');
+  if(slbl) slbl.textContent=dataRows.length||'—';
+
+  // Follow ups
+  const fuEl=document.getElementById('followup-list');
+  const fus=dataRows.filter(r=>r[6]&&r[6].toLowerCase().includes('yes'));
+  fuEl.innerHTML=fus.length?fus.map(r=>`<div class="flag-item"><div class="flag-dot amber"></div><div class="flag-text"><strong>${r[0]}</strong> — Session ${r[1]} on ${r[2]}.<br><span style="color:#64748b;">${r[5]||''}</span></div></div>`).join(''):'<div class="no-data">No follow-ups required</div>';
+}
+
+// ── RENDER HOURS ──
+function renderHours() {
+  const rows=allData.hours;
+  const tbody=document.getElementById('hours-tbody');
+  const dataRows=rows.slice(1).filter(r=>r[0]&&r[0].trim());
+  if(!dataRows.length){tbody.innerHTML='<tr><td colspan="8" class="no-data" style="padding:16px 0;">No hours logged yet.</td></tr>';return;}
+  tbody.innerHTML=dataRows.map(r=>{
+    const total=parseFloat(r[6])||0;
+    const rem=parseFloat(r[7]);
+    const remCol=isNaN(rem)?'#64748b':rem<0?'#f87171':rem<2?'#fbbf24':'#34d399';
+    return`<tr><td>${r[0]}</td><td>${r[1]||0}</td><td>${r[2]||0}</td><td>${r[3]||0}</td><td>${r[4]||0}</td><td>${r[5]||0}</td><td style="font-weight:700;color:#c9a84c;">${total}</td><td style="font-weight:700;color:${remCol};">${isNaN(rem)?10:rem}</td></tr>`;
+  }).join('');
+
+  const latest=dataRows[dataRows.length-1];
+  const cats=[
+    {label:'1-on-1 Sessions',val:parseFloat(latest[1])||0,col:'#c9a84c'},
+    {label:'Workshop',val:parseFloat(latest[2])||0,col:'#6366f1'},
+    {label:'Data & Reporting',val:parseFloat(latest[3])||0,col:'#60a5fa'},
+    {label:'Supervision',val:parseFloat(latest[4])||0,col:'#34d399'},
+    {label:'Ad Hoc Support',val:parseFloat(latest[5])||0,col:'#fb923c'}
+  ];
+  const totalHrs=cats.reduce((s,c)=>s+c.val,0);
+  buildDonut('donut-hours-arcs', cats.map(c=>({...c,value:c.val})));
+  const dlbl=document.getElementById('donut-hours-label');
+  if(dlbl) dlbl.textContent=totalHrs||'—';
+  const breakEl=document.getElementById('hours-breakdown');
+  if(breakEl) breakEl.innerHTML=cats.map(c=>`<div class="hours-row"><div class="hours-label">${c.label}</div><div class="hours-track"><div class="hours-fill" style="width:${(c.val/10)*100}%;background:${c.col};"></div></div><div class="hours-val">${c.val}h</div></div>`).join('');
+
+  const monthEl=document.getElementById('hours-monthly');
+  if(monthEl){
+    const tot=dataRows.reduce((s,r)=>s+(parseFloat(r[6])||0),0);
+    const contracted=dataRows.length*10;
+    const p=contracted?Math.round((tot/contracted)*100):0;
+    monthEl.innerHTML=`<div class="hours-row"><div class="hours-label">Hours delivered</div><div class="hours-track"><div class="hours-fill" style="width:${Math.min(p,100)}%;background:#c9a84c;"></div></div><div class="hours-val">${tot}</div></div><div class="hours-row"><div class="hours-label">Contracted</div><div class="hours-track"><div class="hours-fill" style="width:100%;background:#1e293b;"></div></div><div class="hours-val">${contracted}</div></div><div style="font-size:0.7rem;color:#64748b;margin-top:8px;">${p}% delivered across ${dataRows.length} week(s)</div>`;
+  }
+}
+
+// ── RENDER LEADERSHIP ──
+function renderLeadership() {
+  const rs=allData.responses;
+  const idx=calcIndices(rs);
+  const now=new Date();
+  document.getElementById('ldr-period').textContent=now.toLocaleDateString('en-AU',{month:'long',year:'numeric'});
+
+  if(!idx){
+    document.getElementById('ldr-big-score').textContent='—';
+    return;
+  }
+
+  const scoreEl=document.getElementById('ldr-big-score');
+  if(scoreEl){ scoreEl.textContent=fmt(idx.composite); scoreEl.style.color=idx.composite>=7?'#34d399':idx.composite>=5?'#fbbf24':'#f87171'; }
+  const lblEl=document.getElementById('ldr-score-label');
+  if(lblEl){ lblEl.textContent=idx.composite>=7.5?'↑ Strong performance':idx.composite>=5.5?'→ Developing':'↓ Needs attention'; lblEl.style.color=idx.composite>=7.5?'#34d399':idx.composite>=5.5?'#fbbf24':'#f87171'; }
+
+  const pairs=[['ldr-wellbeing','wellbeing'],['ldr-derek','derek'],['ldr-culture','culture'],['ldr-leadership','leadership'],['ldr-productivity','productivity'],['ldr-sales','sales']];
+  pairs.forEach(([elId,key])=>{
+    const el=document.getElementById(elId);
+    if(el) el.innerHTML=`${fmt(idx[key])}<span class="i-max">/10</span>`;
+    const sum=document.getElementById('ldr-sum-'+key);
+    if(sum) sum.textContent=summaryText(key,idx[key]);
+  });
+
+  // DEREK self-awareness
+  const yes=rs.filter(r=>r.derekSelf&&r.derekSelf.toLowerCase().includes('yes')).length;
+  const tot=rs.filter(r=>r.derekSelf&&(r.derekSelf.toLowerCase().includes('yes')||r.derekSelf.toLowerCase().includes('no'))).length;
+  const dp=tot?Math.round((yes/tot)*100):null;
+  document.getElementById('ldr-derek-pct').textContent=dp!==null?dp+'%':'—';
+  if(tot){
+    const circ=2*Math.PI*50;
+    const dash=(yes/tot)*circ;
+    const el=document.getElementById('ldr-donut-yes');
+    if(el){el.setAttribute('stroke-dasharray',`${dash} ${circ-dash}`);el.setAttribute('stroke-dashoffset',78);}
+  }
+
+  // Mood
+  const weeks=getWeekGroups(rs);
+  const wKeys=Object.keys(weeks).sort();
+  const thisWK=wKeys.length?weeks[wKeys[wKeys.length-1]]:rs;
+  const moodDefs=[
+    {label:'Energised',color:'#34d399'},{label:'Focused',color:'#60a5fa'},
+    {label:'Flat',color:'#94a3b8'},{label:'Tense',color:'#f87171'},{label:'Disconnected',color:'#fbbf24'}
+  ];
+  const moodSegs=moodDefs.map(m=>({...m,value:rs.filter(r=>r.mood&&r.mood.toLowerCase().trim()===m.label.toLowerCase()).length}));
+  buildDonut('ldr-mood-arcs', moodSegs);
+  buildLegend('ldr-mood-legend', moodSegs, rs.length);
+
+  // Recommendations
+  const recsEl=document.getElementById('ldr-recommendations');
+  if(recsEl){
+    const recs=[];
+    const add=(type,title,text)=>recs.push({type,title,text});
+    if(idx.wellbeing>=7.5) add('good','↑ Team wellbeing is tracking strongly','Energy, sleep and stress scores are above benchmark. Staff are showing up resourced and ready. Maintain the current environment.');
+    else if(idx.wellbeing>=5.5) add('neutral','→ Wellbeing is developing','Energy and recovery scores are moderate. Worth exploring workload pressures and whether staff feel they can switch off outside of work.');
+    else add('warn','⚠ Wellbeing needs immediate attention','Staff are reporting low energy, poor recovery and/or high stress. This directly impacts customer experience quality. A workload and environment review is recommended.');
+    if(idx.leadership>=7.5) add('good','↑ Leadership trust is strong','Staff feel supported, receive useful feedback and trust the direction of the business. This is the foundation of high performance culture.');
+    else if(idx.leadership>=5.5) add('neutral','→ Leadership trust has room to grow','Feedback frequency and recognition scores indicate there is opportunity to strengthen the leader-staff relationship. Small, consistent actions here produce significant culture shifts.');
+    else add('warn','⚠ Leadership trust is the priority area','Staff scores on manager support, feedback quality and recognition are below benchmark. This is a leadership behaviour signal. The program recommends a specific focus on feedback cadence and public recognition.');
+    if(idx.derek>=7.5) add('good','↑ DEREK. Behaviour Index is strong','Staff are holding themselves to high standards, taking full ownership of results and pushing beyond the minimum. The program language is embedding.','good');
+    else if(idx.derek>=5.5) add('neutral','→ Accountability standards are developing','Ownership and self-standards are building. DEREK behaviours are still present in the team. Reinforcement through 1-on-1s and the monthly workshop is accelerating this shift.');
+    else add('warn','⚠ Accountability is the key development area','Staff scores on ownership, standards and going beyond the minimum are below benchmark. This is normal in early program stages. Consistent 1-on-1 focus on personal standards will shift this.');
+    if(idx.sales>=7.5) add('good','↑ Sales readiness is high','Staff confidence in product knowledge, pipeline discipline and brand pride are all tracking well. High sales readiness in luxury automotive correlates directly with higher conversion rates and customer retention.');
+    else if(idx.sales>=5.5) add('neutral','→ Sales readiness is developing','Product knowledge or pipeline follow-up scores have room to grow. Consider structured product training or accountability check-ins around pipeline management.');
+    else add('warn','⚠ Sales readiness needs focus','Staff confidence and brand alignment are below standard for a luxury automotive environment. A customer interaction this week with a flat or disengaged salesperson is a lost sale and a damaged brand impression.');
+    recsEl.innerHTML=recs.map(r=>`<div class="recommendation ${r.type}"><div class="r-title">${r.title}</div><div class="r-text">${r.text}</div></div>`).join('');
+  }
+
+  // Blockers
+  const blockerMap={};
+  rs.forEach(r=>{if(r.blocker)blockerMap[r.blocker]=(blockerMap[r.blocker]||0)+1;});
+  const cols=['#6366f1','#f87171','#fbbf24','#34d399','#60a5fa','#2dd4bf'];
+  const bSegs=Object.entries(blockerMap).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([label,value],i)=>({label,value,color:cols[i]}));
+  buildDonut('ldr-blockers-arcs', bSegs);
+  buildLegend('ldr-blockers-legend', bSegs, rs.length);
+}
+
+// ── LOAD ALL ──
+async function loadAllData() {
+  document.getElementById('syncStatus').textContent='Syncing...';
+  try {
+    const [rRows,sRows,hRows,wRows]=await Promise.all([
+      fetchSheet('Form Responses 1'),
+      fetchSheet('Staff Sessions'),
+      fetchSheet('Hours Log'),
+      fetchSheet('Workshops')
+    ]);
+    allData.responses=processResponses(rRows);
+    allData.sessions=sRows;
+    allData.hours=hRows;
+    allData.workshops=wRows;
+    renderOverview();
+    renderSurveyPage();
+    renderSessions();
+    renderHours();
+    renderLeadership();
+    const t=new Date();
+    document.getElementById('syncStatus').textContent='Synced '+t.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
+  } catch(e) {
+    document.getElementById('syncStatus').textContent='Sync failed';
+    console.error(e);
+  }
+}
+
+function showPage(id,btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+
+window.addEventListener('load',async()=>{
+  await loadAllData();
+  document.getElementById('loadingOverlay').style.display='none';
+});
+</script>
+</body>
+</html>
